@@ -15,6 +15,6 @@ while (my ($class, $decl) = each %state_machines) {
     my $graph = gv::digraph($class);
     my $drawer = Class::StateMachine::Declarative::Graphviz->new;
     $drawer->draw_state_machine($graph, $decl);
-    $graph->gv::write("$class.gv");
+    $graph->gv::write("$class.dot");
 }
 
