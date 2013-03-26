@@ -1,34 +1,77 @@
 package Class::StateMachine::Declarative::Graphviz;
 
-use 5.014002;
+our $VERSION = '0.01';
+
+use 5.010;
 use strict;
 use warnings;
 
-require Exporter;
+use Moo;
 
-our @ISA = qw(Exporter);
+sub draw_state_machine {
+    my ($self, $graph, $sm_decl) = @_;
+    $self->_start($graph);
+    my @transitions;
+    my @states = @$sm_decl;
+    while (@states) {
+        my $name = shift @states;
+        my $decl = shift @states;
+        my ($enter, $leave, @delay, @ignore);
+        while (my ($k, $v) = each %$decl) {
+            given ($k) {
+                when ('enter') {
+                    $enter = $v;
+                }
+                when ('leave') {
+                    $leave = $v;
+                }
+                when (/^delay(?:_once)?$/) {
+                    push @delay, @$v;
+                }
+                when ('ignore') {
+                    push @ignore, $v;
+                }
+                when ('jump') {
+                    push @transitions, { from => $name,
+                                         event => 'jump',
+                                         to => $v }
+                }
+                when ('transitions') {
+                    while (my ($event, $to) = each %$v) {
+                        push @transitions, { from => $name,
+                                             event => $event,
+                                             to => $to };
+                    }
+                }
+                default {
+                    warn "unsupported declaration $k\n";
+                }
+            }
+        }
+        my $node = $graph->gv::node($name);
+        $node->gv::setv(shape => 'record');
+        my $label = join("|", $name,
+                         (defined $enter ? "enter: $enter" : ()),
+                         (defined $leave ? "leave: $leave" : ()));
+        $node->gv::setv(label => "{ $label }");
+        # $node->setv
 
-# Items to export into callers namespace by default. Note: do not export
-# names by default without a very good reason. Use EXPORT_OK instead.
-# Do not simply export all your public functions/methods/constants.
+    }
+    $self->_transitions($graph, @transitions);
+    $self->_end($graph);
+}
 
-# This allows declaration	use Class::StateMachine::Declarative::Graphviz ':all';
-# If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
-# will save memory.
-our %EXPORT_TAGS = ( 'all' => [ qw(
-	
-) ] );
+sub _transitions {
+    my ($self, $graph, @transitions) = @_;
+    for my $t (@transitions) {
+        my $edge = $graph->gv::edge($t->{from}, $t->{to});
+        $edge->gv::setv(label => $t->{event});
+    }
+}
 
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+sub _start {}
+sub _end {}
 
-our @EXPORT = qw(
-	
-);
-
-our $VERSION = '0.01';
-
-
-# Preloaded methods go here.
 
 1;
 __END__
