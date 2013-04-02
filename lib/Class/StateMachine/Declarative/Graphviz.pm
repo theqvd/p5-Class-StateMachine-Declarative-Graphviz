@@ -6,60 +6,86 @@ use 5.010;
 use strict;
 use warnings;
 
-use Moo;
+use Class::StateMachine::Declarative::Builder;
+
+sub new {
+    my $class = shift;
+    my $self = {};
+    bless $self, $class;
+}
 
 sub draw_state_machine {
-    my ($self, $graph, $sm_decl) = @_;
+    my ($self, $graph, $class, $sm_decl) = @_;
+    my $builder = Class::StateMachine::Declarative::Builder->new($class);
+    $builder->parse_state_declarations(@$sm_decl);
     $self->_start($graph);
-    my @transitions;
-    my @states = @$sm_decl;
-    while (@states) {
-        my $name = shift @states;
-        my $decl = shift @states;
-        my ($enter, $leave, @delay, @ignore);
-        while (my ($k, $v) = each %$decl) {
-            given ($k) {
-                when ('enter') {
-                    $enter = $v;
-                }
-                when ('leave') {
-                    $leave = $v;
-                }
-                when (/^delay(?:_once)?$/) {
-                    push @delay, @$v;
-                }
-                when ('ignore') {
-                    push @ignore, $v;
-                }
-                when ('jump') {
-                    push @transitions, { from => $name,
-                                         event => 'jump',
-                                         to => $v }
-                }
-                when ('transitions') {
-                    while (my ($event, $to) = each %$v) {
-                        push @transitions, { from => $name,
-                                             event => $event,
-                                             to => $to };
-                    }
-                }
-                default {
-                    warn "unsupported declaration $k\n";
-                }
-            }
-        }
-        my $node = $graph->gv::node($name);
-        $node->gv::setv(shape => 'record');
-        my $label = join("|", $name,
-                         (defined $enter ? "enter: $enter" : ()),
-                         (defined $leave ? "leave: $leave" : ()));
-        $node->gv::setv(label => "{ $label }");
-        # $node->setv
-
-    }
-    $self->_transitions($graph, @transitions);
+    $self->_add_state($graph, $builder->{top});
+    $self->_add_transitions($graph, $builder);
     $self->_end($graph);
 }
+
+sub _add_state {
+    my ($self, $graph, $state) = @_;
+    my @ss = @{$state->{substates}};
+    my $name = $state->{name};
+    my $node;
+    if (@ss) {
+        my $name = "cluster_$name";
+        $node = $graph->gv::graph($name);
+        my $node0 = $node->gv::node($state->{name});
+        $node0->gv::setv(label => 'o');
+        $self->_add_state($node, $_) for @ss;
+    }
+    else {
+        $node = $graph->gv::node($name);
+
+    }
+    $node->gv::setv(label => $state->{short_name});
+    $state->{gv_name} = $name;
+}
+
+sub _add_transitions {
+    my ($self, $graph, $builder) = @_;
+    while (my ($n, $state) = each %{$builder->{states}}) {
+        while (my ($event, $target) = each %{$state->{transitions_abs}}) {
+            $self->_add_transition($graph, $event, $state, $builder->{states}{$target});
+        }
+        if (defined(my $jump = $state->{jump_abs})) {
+            $self->_add_transition($graph, '<jump>', $state, $builder->{states}{$jump});
+        }
+    }
+}
+
+sub _add_transition {
+    my ($self, $graph, $event, $from, $to) = @_;
+    my $edge = $graph->gv::edge($from->{gv_name}, $to->{gv_name});
+    $edge->gv::setv(label => $event);
+}
+
+
+    #     when ('transitions') {
+    #                 while (my ($event, $to) = each %$v) {
+    #                     push @transitions, { from => $name,
+    #                                          event => $event,
+    #                                          to => $to };
+    #                 }
+    #             }
+    #             default {
+    #                 warn "unsupported declaration $k\n";
+    #             }
+    #         }
+    #     }
+    #     my $node = $graph->gv::node($name);
+    #     #$node->gv::setv(shape => 'record');
+    #     #my $label = join("|", $name,
+    #     #                 (defined $enter ? "enter: $enter" : ()),
+    #     #                 (defined $leave ? "leave: $leave" : ()));
+    #     #$node->gv::setv(label => "{ $label }");
+    #     # $node->setv
+
+    # }
+    # $self->_transitions($graph, @transitions);
+
 
 sub _transitions {
     my ($self, $graph, @transitions) = @_;

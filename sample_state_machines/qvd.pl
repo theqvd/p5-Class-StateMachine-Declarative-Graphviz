@@ -72,7 +72,7 @@
                                                       'transitions' => {
                                                                          'on_transient_db_error' => 'long_delaying'
                                                                        },
-                                                      'delay_once' => [
+                                                      'delay' => [
                                                                         'on_hkd_stop'
                                                                       ]
                                                     }
@@ -144,7 +144,7 @@
                                                },
                                                '__any__',
                                                {
-                                                 'delay_once' => [
+                                                 'delay' => [
                                                                    '_on_qvd_cmd_for_user_notify',
                                                                    '_on_hkd_stop'
                                                                  ]
@@ -253,7 +253,7 @@
                                                       },
                                                       '__any__',
                                                       {
-                                                        'delay_once' => [
+                                                        'delay' => [
                                                                           '_on_delete_cmd',
                                                                           '_on_qvd_cmd_for_vm_notify',
                                                                           'on_hkd_stop'
@@ -650,7 +650,7 @@
                                                     },
                                                     '__any__',
                                                     {
-                                                      'delay_once' => [
+                                                      'delay' => [
                                                                         '_on_cmd_stop',
                                                                         '_on_vm_process_done',
                                                                         'on_hkd_stop',
@@ -696,7 +696,7 @@
                                                 },
                                                 '__any__',
                                                 {
-                                                  'delay_once' => [
+                                                  'delay' => [
                                                                     'on_hkd_stop'
                                                                   ]
                                                 }
@@ -910,7 +910,7 @@
                                                     '_on_config_reload_done',
                                                     '_on_config_reload_error'
                                                   ],
-                                      'delay_once' => [
+                                      'delay' => [
                                                         '_on_cmd_stop',
                                                         '_on_dead_db',
                                                         '_on_ticker_error'
@@ -957,7 +957,7 @@
                                                     },
                                                     '__any__',
                                                     {
-                                                      'delay_once' => [
+                                                      'delay' => [
                                                                         '_on_qvd_cmd_for_host_notify',
                                                                         'on_hkd_stop'
                                                                       ]
@@ -1523,7 +1523,7 @@
                                                     },
                                                     '__any__',
                                                     {
-                                                      'delay_once' => [
+                                                      'delay' => [
                                                                         '_on_cmd_stop',
                                                                         '_on_lxc_done',
                                                                         'on_hkd_stop',

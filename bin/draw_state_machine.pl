@@ -14,7 +14,8 @@ use Class::StateMachine::Declarative::Graphviz;
 while (my ($class, $decl) = each %state_machines) {
     my $graph = gv::digraph($class);
     my $drawer = Class::StateMachine::Declarative::Graphviz->new;
-    $drawer->draw_state_machine($graph, $decl);
+    # UNIVERSAL::isa($decl, 'HASH') and $decl = [%$decl];
+    $drawer->draw_state_machine($graph, $class, $decl);
     $graph->gv::write("$class.dot");
 }
 
